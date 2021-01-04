@@ -1,8 +1,6 @@
 
-
-// Partial License: MIT
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.0;
+pragma solidity 0.7.5;
 
 library SafeMath {
     /**
@@ -376,16 +374,18 @@ contract Ownable is Context {
 }
 
 contract S4ERC20 is Context, IERC20, Ownable {
+    event RenouncedWhitelist(bool);
+    
     using SafeMath for uint256;
     using Address for address;
-     uint256 oneDay = 60 * 60 * 24;
-    uint turning=6;
+    uint256 public immutable oneDay;
+    uint256 public immutable turning;
             
      
-    bool public UniSwapSaleEnds = false;
+    bool public UniSwapSaleEnds;
     uint256 public UniSwapSaleEndsTime;
     // Transaction Fees:
-    uint8 public constant txFee = 50; // 5% fees
+    uint256 public constant txFee = 50; // 5% fees
     address public feeDistributor; 
     
     mapping(address => bool) public feelessSender;
@@ -399,11 +399,11 @@ contract S4ERC20 is Context, IERC20, Ownable {
     mapping (address => uint256) private _balances;
     mapping (address => mapping (address => uint256)) private _allowances;
 
-    uint256 private _totalSupply;
+    uint256 public _totalSupply;
 
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string public _name;
+    string public _symbol;
+    uint256  public immutable _decimals;
     
     /*
     * added this 2 variables to check if uniswap sale ends,, and when '''SetUniSwapSaleEnds''' function will be called
@@ -414,6 +414,13 @@ contract S4ERC20 is Context, IERC20, Ownable {
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
+        
+        oneDay  = 60 * 60 * 24;
+        turning = 6;
+        
+        UniSwapSaleEnds = false;
+        
+        setFeeDistributor(owner());
     }
 
     /**
@@ -432,7 +439,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
     }
 
     
-    function decimals() public view returns (uint8) {
+    function decimals() public view returns (uint256) {
         return _decimals;
     }
     /**
@@ -538,29 +545,37 @@ contract S4ERC20 is Context, IERC20, Ownable {
     
     // assign a new fee distributor address
     function setFeeDistributor(address _distributor) public onlyOwner {
+        require(_distributor != address(0), "ERC20: transfer from the zero address");
         feeDistributor = _distributor;
     }
     
     
      // enable/disable sender who can send feeless transactions
     function setFeelessSender(address _sender, bool _feeless) public onlyOwner {
+        require(_sender != address(0), "ERC20: transfer from the zero address");
         require(!_feeless || _feeless && canWhitelist, "cannot add to whitelist");
         feelessSender[_sender] = _feeless;
     }
 
-    // enable/disable recipient who can reccieve feeless transactions
+    // enable-disable recipient who can recieve feeless transactions
     function setFeelessReciever(address _recipient, bool _feeless) public onlyOwner {
+        require(_recipient != address(0), "ERC20: transfer from the zero address");
         require(!_feeless || _feeless && canWhitelist, "cannot add to whitelist");
         feelessReciever[_recipient] = _feeless;
+    }
+    
+    function SetOneDayBehind(uint256 _days) public onlyOwner { //enter input in days to set fee started from that day
+        UniSwapSaleEndsTime = block.timestamp - (_days * oneDay);
     }
 
 
     function setUniSwapReciever(address _recipient, bool _feeless) public onlyOwner {
+        require(_recipient != address(0), "ERC20: transfer from the zero address");
         UniSwapReciever[_recipient] = _feeless;
     }
     
     function SetUniSwapSaleEnds() public onlyOwner {
-        UniSwapSaleEnds = true;
+        UniSwapSaleEnds = !UniSwapSaleEnds;
         UniSwapSaleEndsTime = block.timestamp;
     }
 
@@ -568,6 +583,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
     function renounceWhitelist() public onlyOwner {
         // adding to whitelist has been disabled forever:
         canWhitelist = false;
+        emit RenouncedWhitelist(false);
     }
 
     // to caclulate the amounts for recipient and distributer after fees have been applied
@@ -575,11 +591,11 @@ contract S4ERC20 is Context, IERC20, Ownable {
         address sender,
         address recipient,
         uint256 amount
-    ) public view returns (uint256 transferToAmount, uint256 transferToFeeDistributorAmount) {
-        uint256 sfee = 5; //10% fee default if time not met in loop. 
-            
+    ) public view returns (uint256, uint256) {
+       
         if(UniSwapReciever[recipient] && UniSwapSaleEnds){
             uint256 timeNow = block.timestamp;
+            uint256 sfee = 5; //5% fee default if time not met in loop. 
             
             uint256 datediff = timeNow - UniSwapSaleEndsTime;
             
@@ -639,7 +655,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
      * - `to` cannot be the zero address.
      */
     function _transferTO(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
+        require(account != address(0), "ERC20: making to the zero address");
 
         _beforeTokenTransfer(address(0), account, amount);
 
