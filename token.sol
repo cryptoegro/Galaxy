@@ -164,7 +164,7 @@ abstract contract Context {
  */
 interface IERC20 {
     
-    function totalSupply() external view returns (uint256);
+    //function totalSupply() external view returns (uint256);
 
     /**
      * @dev Returns the amount of tokens owned by `account`.
@@ -403,7 +403,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
 
     string public _name;
     string public _symbol;
-    uint256  public immutable _decimals;
+    uint8  public immutable _decimals;
     
     /*
     * added this 2 variables to check if uniswap sale ends,, and when '''SetUniSwapSaleEnds''' function will be called
@@ -421,32 +421,6 @@ contract S4ERC20 is Context, IERC20, Ownable {
         UniSwapSaleEnds = false;
         
         setFeeDistributor(owner());
-    }
-
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() public view returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
-     * name.
-     */
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
-
-    
-    function decimals() public view returns (uint256) {
-        return _decimals;
-    }
-    /**
-     * @dev See {IERC20-totalSupply}.
-     */
-    function totalSupply() public view override returns (uint256) {
-        return _totalSupply;
     }
 
     /**
@@ -565,7 +539,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
     }
     
     function SetOneDayBehind(uint256 _days) public onlyOwner { //enter input in days to set fee started from that day
-        UniSwapSaleEndsTime = block.timestamp - (_days * oneDay);
+        UniSwapSaleEndsTime = block.timestamp.sub(_days.mul(oneDay));
     }
 
 
@@ -574,7 +548,7 @@ contract S4ERC20 is Context, IERC20, Ownable {
         UniSwapReciever[_recipient] = _feeless;
     }
     
-    function SetUniSwapSaleEnds() public onlyOwner {
+    function setFeeStartStopCycle() public onlyOwner {
         UniSwapSaleEnds = !UniSwapSaleEnds;
         UniSwapSaleEndsTime = block.timestamp;
     }
