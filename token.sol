@@ -1,6 +1,6 @@
 
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.5;
+pragma solidity 0.8.10;
 
 library SafeMath {
     /**
@@ -686,9 +686,9 @@ contract S4ERC20 is Context, IERC20, Ownable {
 }
 
 
-contract Galaxy is S4ERC20 {
+contract TokenERC20 is S4ERC20 {
 
-    constructor() S4ERC20("Galaxy", "GLXY") {
+    constructor() S4ERC20("token", "token") {
         
         _transferTO(msg.sender, 100000000e18);
     }
